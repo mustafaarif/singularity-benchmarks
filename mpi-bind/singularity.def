@@ -1,0 +1,38 @@
+Bootstrap: docker
+From: ubuntu:18.04
+
+%setup
+   # Make directory for test MPI program
+   mkdir ${SINGULARITY_ROOTFS}/mpiapp
+   cp mpi_bandwidth.c ${SINGULARITY_ROOTFS}/mpiapp/
+
+%post
+   # install development tools
+   apt-get update
+   export DEBIAN_FRONTEND=noninteractive
+   apt-get -y install gfortran build-essential wget nano git locales-all tzdata
+   ln -fs /usr/share/zoneinfo/Europe/Stockholm /etc/localtime
+
+   # Install MPICH
+   MPICH_VERSION=3.4.3
+   mkdir /mpich
+   cd /mpich
+   wget http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz
+   tar xf mpich-$MPICH_VERSION.tar.gz --strip-components=1
+   rm mpich-$MPICH_VERSION.tar.gz
+
+   # Disable the addition of the RPATH to compiled executables
+   # this allows us to override the MPI libraries to use those
+   # found via LD_LIBRARY_PATH
+   ./configure --with-device=ch4:ofi --prefix=/mpich/install --disable-wrapper-rpath
+   make test
+   make -j 4 install
+   
+   # Add to local environment to build mpi app
+   export PATH=$PATH:/mpich/install/bin
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mpich/install/lib
+   cd /mpiapp
+   mpicc -o mpi_bandwidth -fPIC mpi_bandwidth.c
+   
+   # Clean cache 
+   apt-get clean

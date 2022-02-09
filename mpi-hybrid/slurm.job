@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH -J mpi_test
+#SBATCH -p main
+#SBATCH --reservation=sing
+#SBATCH --time=00:05:00
+#SBATCH -N 2
+#SBATCH -A pdc.staff
+#SBATCH --ntasks-per-node=128
+#SBATCH --output=slurm-%j.out
+#SBATCH --error=slurm-%j.err
+
+
+# Show linking on mpi app to verify if host mpi libs are being used
+srun --ntasks=1 singularity exec ./mpi-bw-hybrid.sif bash -c 'ldd /mpiapp/mpi_bandwidth'
+
+# Run Mpi app
+srun --mpi=pmi2 -n 256 ./mpi-bw-hybrid.sif

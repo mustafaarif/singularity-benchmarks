@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH -J mpi_test
+#SBATCH -p main
+#SBATCH -A pdc.staff
+#SBATCH --reservation=sing
+#SBATCH --time=00:05:00
+#SBATCH -N 2
+#SBATCH --ntasks-per-node=128
+#SBATCH --output=slurm-%j.out
+#SBATCH --error=slurm-%j.err
+
+
+# Compile the source code
+cc -o mpi_bandwidth.o mpi_bandwidth.c
+
+#Now launch computation with 256 processes
+srun -n 256 ./mpi_bandwidth.o
