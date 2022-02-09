@@ -14,4 +14,4 @@
 srun --ntasks=1 singularity exec ./mpi-bw-hybrid.sif bash -c 'ldd /mpiapp/mpi_bandwidth'
 
 # Run Mpi app
-srun --mpi=pmi2 -n 256 ./mpi-bw-hybrid.sif
+srun --mpi=pmi2 -n 256 singularity exec ./mpi-bw-hybrid.sif bash -c '/mpiapp/mpi_bandwidth'
