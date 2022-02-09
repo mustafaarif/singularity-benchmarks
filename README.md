@@ -21,4 +21,4 @@ The benchmark tests are done in following configurations.
 
 ## Results
 
-Results to be posted here.
+![bandwidth_benchmarks](https://user-images.githubusercontent.com/10483719/153181812-b089ac0e-0008-4628-864f-689858f84833.png)
