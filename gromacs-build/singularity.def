@@ -1,0 +1,58 @@
+Bootstrap: docker
+From: ubuntu:18.04
+
+%post
+   MPICH_VERSION=3.4.3
+   MPICH_INSTALL_PATH=/opt/mpich
+   GROMACS_INSTALL_PATH=/apps/gromacs
+   mkdir -p ${MPICH_INSTALL_PATH}
+   mkdir -p ${GROMACS_INSTALL_PATH}
+   mkdir -p /tmp/downloads
+
+   # Install development tools
+   apt-get update
+   export DEBIAN_FRONTEND=noninteractive
+   apt-get -y install gfortran build-essential wget nano git locales-all tzdata cmake gfortran
+   ln -fs /usr/share/zoneinfo/Europe/Stockholm /etc/localtime
+
+   # Install MPICH
+   wget http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz -P /tmp/downloads
+   cd /tmp/downloads
+   tar xf /tmp/downloads/mpich-$MPICH_VERSION.tar.gz
+   cd mpich-${MPICH_VERSION}
+   
+   # Disable the addition of the RPATH to compiled executables
+   # this allows us to override the MPI libraries to use those
+   # found via LD_LIBRARY_PATH
+   ./configure --with-device=ch4:ofi --prefix=${MPICH_INSTALL_PATH} --disable-wrapper-rpath
+   make -j 8 install
+   
+   # Add MPICH Libs to environment to build Gromacs
+   export PATH=$PATH:${MPICH_INSTALL_PATH}/bin
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${MPICH_INSTALL_PATH}/lib
+   
+   # Build Gromacs
+   wget http://ftp.gromacs.org/pub/gromacs/gromacs-2020.tar.gz -P /tmp/downloads
+   cd /tmp/downloads
+   tar -xvzf gromacs-2020.tar.gz
+   cd gromacs-2020
+   mkdir -p build && cd build
+   cmake .. -DCMAKE_INSTALL_PREFIX=${GROMACS_INSTALL_PATH} -DGMX_BUILD_OWN_FFTW=ON -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DGMX_MPI=on
+   make -j 8
+   make install
+   
+   # Add Gromacs to path
+   touch /.singularity.d/env/99-gromacs2020.sh
+   cat << 'EOF' >> /.singularity.d/env/99-gromacs2020.sh
+   LD_LIBRARY_PATH=/apps/gromacs/lib:$LD_LIBRARY_PATH
+   GMXBIN=/apps/gromacs/bin
+   GMXDATA=/apps/gromacs/share/gromacs
+   GMXLDLIB=/apps/gromacs/lib
+   GMXMAN=/apps/gromacs/share/man
+   PATH=/apps/gromacs/bin:$PATH
+   PKG_CONFIG_PATH=/apps/gromacs/lib/pkgconfig:$PKG_CONFIG_PATH
+   GROMACS_DIR=/apps/gromacs
+   EOF
+
+   # Clean container 
+   apt-get clean
