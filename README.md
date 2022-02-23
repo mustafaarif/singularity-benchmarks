@@ -21,4 +21,6 @@ The benchmark tests are done in following configurations.
 
 ## Results
 
-Results to be posted here.
+
+
+![benchmark_results](https://user-images.githubusercontent.com/10483719/153186355-144c6e82-ee7b-4e47-92c7-24d098ea1c76.png)
